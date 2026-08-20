@@ -73,7 +73,7 @@ export const defaultConfig: GatewayConfig = {
       upstreamModel: "deepseek-chat",
       inPerM: 0.34,
       outPerM: 0.5,
-      match: [/^deepseek/i, /^gpt/i, /^o[134]/i, /^claude.*haiku/i],
+      match: [/^deepseek/i, /^gpt/i, /^o[134]/i, /^claude/i],
     },
     {
       pool: "qwen3-coder",
