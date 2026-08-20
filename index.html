@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overflow — your agent keeps working when your AI subscription caps out</title>
+<title>Overflow: your agent keeps working when your AI subscription caps out</title>
 <meta name="description" content="Hit your Claude or ChatGPT limit mid-task? Overflow routes your agent to a pool of discounted, honestly-labeled open-model capacity until your limit resets. Sell your idle GPU into the pool while you're away.">
-<meta property="og:title" content="Overflow — never watch the reset timer again">
-<meta property="og:description" content="When your AI subscription caps out, your agent keeps going at up to 90% off. Hard-capped, revocable, no account sharing — ever.">
+<meta property="og:title" content="Overflow: never watch the reset timer again">
+<meta property="og:description" content="When your AI subscription caps out, your agent keeps going at up to 90% off. Hard-capped, revocable, no account sharing, ever.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230B0F14'/><path d='M8 20c2-6 6-10 8-10s6 4 8 10' stroke='%23FFB224' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -231,7 +231,7 @@
   <div>
     <div class="eyebrow">⏳ limit resets in <b id="countdown">2:47:12</b></div>
     <h1>Your agent shouldn't stop because <span class="hl">your quota did.</span></h1>
-    <p class="lede">You pay for Claude, ChatGPT, or Grok — and still hit the wall mid-task. Overflow is a pool of discounted, <b>honestly-labeled</b> open-model capacity your coding agent falls back to automatically. The work keeps moving until your limit resets. Up to <b>90% off</b>. No account sharing, ever.</p>
+    <p class="lede">You pay for Claude, ChatGPT, or Grok, and you still hit the wall mid-task. Overflow is a pool of discounted, <b>honestly-labeled</b> open-model capacity your coding agent falls back to automatically. The work keeps moving until your limit resets. Up to <b>90% off</b>. No account sharing, ever.</p>
     <div class="signup" id="join">
       <form data-tag="demand">
         <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
@@ -243,7 +243,7 @@
   </div>
 
   <div class="term">
-    <div class="term-bar"><i></i><i></i><i></i><span>claude — ~/projects/api</span></div>
+    <div class="term-bar"><i></i><i></i><i></i><span>claude · ~/projects/api</span></div>
     <div class="term-body" id="termbody"></div>
   </div>
 </div>
@@ -254,19 +254,19 @@
 
 <section id="how">
   <div class="wrap">
-    <div class="kicker">// how it works — buyers</div>
+    <div class="kicker">// how it works · buyers</div>
     <h2>Your subscription first. The pool when it runs dry.</h2>
-    <p class="sub">Overflow isn't a replacement for your plan — it's the fallback that makes the reset timer irrelevant.</p>
+    <p class="sub">Overflow isn't a replacement for your plan. It's the fallback that makes the reset timer irrelevant.</p>
     <div class="grid3">
       <div class="card">
         <div class="num">01</div>
         <h3>Point your agent at Overflow</h3>
-        <p>One OpenAI-compatible endpoint (Anthropic-shaped too). Works with Claude Code via <code>ANTHROPIC_BASE_URL</code>, plus Codex, Cursor, and anything speaking the standard APIs. Prepaid credits — no subscription.</p>
+        <p>One OpenAI-compatible endpoint (Anthropic-shaped too). Works with Claude Code via <code>ANTHROPIC_BASE_URL</code>, plus Codex, Cursor, and anything speaking the standard APIs. Prepaid credits, no subscription.</p>
       </div>
       <div class="card">
         <div class="num">02</div>
         <h3>Hit your limit, keep working</h3>
-        <p>When your plan caps out, the router continues your session on the nearest open-model equivalent — Qwen3-Coder, DeepSeek, GLM — and stamps every response with the model that produced it.</p>
+        <p>When your plan caps out, the router continues your session on the nearest open-model equivalent (Qwen3-Coder, DeepSeek, GLM) and stamps every response with the model that produced it.</p>
       </div>
       <div class="card">
         <div class="num">03</div>
@@ -280,10 +280,10 @@
 <section id="sell">
   <div class="wrap split">
     <div>
-      <div class="kicker">// how it works — sellers</div>
+      <div class="kicker">// how it works · sellers</div>
       <h2>Going away? Your GPU doesn't have to.</h2>
-      <p class="sub">Gaming rig idle for two weeks? Homelab mostly asleep? Run one Docker command and your hardware serves open-weight models into the pool — metered per token, at a price you set.</p>
-      <p class="sub" style="margin-top:14px">You never share an account, a login, or a key to anything. The only thing on offer is compute you deposited, with a hard cap you chose — so there's nothing to come home to but a payout.</p>
+      <p class="sub">Gaming rig idle for two weeks? Homelab mostly asleep? Run one Docker command and your hardware serves open-weight models into the pool, metered per token, at a price you set.</p>
+      <p class="sub" style="margin-top:14px">You never share an account, a login, or a key to anything. The only thing on offer is compute you deposited, with a hard cap you chose, so there's nothing to come home to but a payout.</p>
       <div class="signup">
         <form data-tag="supply">
           <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
@@ -302,7 +302,7 @@
       </div>
       <div class="gauge-num" id="gnum">17.1M <span>/ 50M tokens</span></div>
       <div class="gauge-bar"><i id="gbar"></i></div>
-      <div class="gauge-cap"><span>0</span><span>hard cap — never exceeded</span><span>50M</span></div>
+      <div class="gauge-cap"><span>0</span><span>hard cap · never exceeded</span><span>50M</span></div>
       <div class="gauge-foot">
         <span class="earned">earned so far <b>$4.10</b></span>
         <button class="btn danger" id="revoke">Revoke now</button>
@@ -315,7 +315,7 @@
   <div class="wrap">
     <div class="kicker">// principles</div>
     <h2>The boring rules that make this legitimate.</h2>
-    <p class="sub">There's already a gray market for "cheap Claude tokens" — pooled accounts, stolen credentials, silently swapped models, prompts harvested and resold. Overflow is a diff against that:</p>
+    <p class="sub">There's already a gray market for "cheap Claude tokens": pooled accounts, stolen credentials, silently swapped models, prompts harvested and resold. Overflow is a diff against that:</p>
     <div class="diff">
       <div class="diff-head">gray_market.md → overflow.md</div>
       <div class="diff-body">
@@ -324,7 +324,7 @@
         <div class="dl del">- silent model substitution ("Claude" that isn't)</div>
         <div class="dl add">+ every response stamped with the exact model that produced it</div>
         <div class="dl del">- prompts harvested and resold as training data</div>
-        <div class="dl add">+ metered, not logged — your prompts are not a product</div>
+        <div class="dl add">+ metered, not logged; your prompts are not a product</div>
         <div class="dl del">- accounts drained while owners sleep</div>
         <div class="dl add">+ hard token caps + instant revocation, enforced at the gateway</div>
         <div class="dl ctx">  proprietary models join only via official partner channels.</div>
@@ -349,7 +349,7 @@
 
 <footer>
   <div class="wrap">
-    <span>overflow — the pool for idle AI capacity</span>
+    <span>overflow · the pool for idle AI capacity</span>
     <span><a href="#join">Waitlist</a> · <a href="mailto:connor.panayi@gmail.com">Contact</a></span>
   </div>
 </footer>
@@ -372,7 +372,7 @@
       ['t-dim',   '$ claude "refactor the auth middleware and add tests"', 0],
       ['t-ink',   '  ⏺ Reading src/middleware/auth.ts…', 700],
       ['t-ink',   '  ⏺ Refactoring token validation (3 files)…', 900],
-      ['t-red',   '  ✗ rate_limit_reached — your 5-hour limit resets in 2h 47m', 1400],
+      ['t-red',   '  ✗ rate_limit_reached: your 5-hour limit resets in 2h 47m', 1400],
       ['t-dim',   '  …', 900],
       ['t-amber', '  ▚ overflow: falling back to pool', 800],
       ['t-cyan',  '  → model: qwen3-coder-480b · $0.31/M · labeled in every response', 600],
@@ -432,7 +432,7 @@
       var email = form.querySelector('input[name=email]').value;
       if (FORMSPREE_ID === 'FORM_ID') {
         msg.className = 'form-msg err';
-        msg.textContent = 'Signups open shortly — email us instead: connor.panayi@gmail.com';
+        msg.textContent = 'Signups open shortly. Email us instead: connor.panayi@gmail.com';
         return;
       }
       btn.disabled = true;
@@ -444,16 +444,16 @@
         msg.className = r.ok ? 'form-msg ok' : 'form-msg err';
         msg.textContent = r.ok
           ? (form.dataset.tag === 'supply' ? "You're on the seller list. We'll be in touch." : "You're on the list. We'll email you at launch.")
-          : 'Something went wrong — try again or email us.';
+          : 'Something went wrong. Try again or email us.';
       }).catch(function () {
         msg.className = 'form-msg err';
-        msg.textContent = 'Network error — try again or email us.';
+        msg.textContent = 'Network error. Try again or email us.';
       }).finally(function () { btn.disabled = false; });
     });
   });
 
   // Cloudflare Web Analytics: paste the manual beacon snippet just before </body>
-  // before launch (manual setup, NOT proxied nameservers — see README).
+  // before launch (manual setup, NOT proxied nameservers; see README).
 </script>
 </body>
 </html>
