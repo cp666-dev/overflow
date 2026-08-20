@@ -1,6 +1,19 @@
-import { openDb, lookupKey } from "./db";
+import { openDb, lookupKey, createApiKey, emailExists, usageForKey } from "./db";
 import { defaultConfig, findRoute, upstreamFor, type GatewayConfig } from "./config";
 import { handleCompletion } from "./proxy";
+import { applyWebhookEvent, createCheckoutSession, verifyStripeSignature, PACKS } from "./billing";
+
+const DASHBOARD = new URL("../public/index.html", import.meta.url).pathname;
+
+// Naive per-IP signup throttle: 5 signups per hour per address.
+const signupHits = new Map<string, number[]>();
+function signupAllowed(ip: string): boolean {
+  const now = Date.now();
+  const hits = (signupHits.get(ip) ?? []).filter((t) => now - t < 3_600_000);
+  hits.push(now);
+  signupHits.set(ip, hits);
+  return hits.length <= 5;
+}
 
 export interface ServerOptions {
   port?: number;
@@ -15,11 +28,74 @@ export function startGateway(opts: ServerOptions = {}) {
   const server = Bun.serve({
     port: opts.port ?? Number(process.env.OVERFLOW_PORT ?? 8484),
     idleTimeout: 240,
-    async fetch(req) {
+    async fetch(req, srv) {
       const url = new URL(req.url);
       const path = url.pathname;
 
       if (path === "/healthz") return Response.json({ ok: true });
+
+      if (path === "/" && req.method === "GET") {
+        return new Response(Bun.file(DASHBOARD), {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      }
+
+      // ---- signup: email in, API key out (shown once) ----
+      if (path === "/signup" && req.method === "POST") {
+        const ip = srv.requestIP(req)?.address ?? "unknown";
+        if (!signupAllowed(ip)) {
+          return Response.json({ error: { type: "rate_limited" } }, { status: 429 });
+        }
+        const body: any = await req.json().catch(() => null);
+        const email = String(body?.email ?? "").trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return Response.json(
+            { error: { type: "invalid_email", message: "Enter a valid email." } },
+            { status: 400 },
+          );
+        }
+        if (emailExists(db, email)) {
+          return Response.json(
+            {
+              error: {
+                type: "email_exists",
+                message: "That email already has a key. Contact us if you lost it.",
+              },
+            },
+            { status: 409 },
+          );
+        }
+        const { key } = createApiKey(db, email.split("@")[0]!, email);
+        return Response.json({ key, note: "Store this now: it is only shown once." });
+      }
+
+      // ---- billing ----
+      if (path === "/billing/packs" && req.method === "GET") {
+        return Response.json({ packs: PACKS });
+      }
+      if (path === "/billing/checkout" && req.method === "POST") {
+        const body: any = await req.json().catch(() => null);
+        const key = lookupKey(db, String(body?.key ?? ""));
+        if (!key) return authError();
+        const baseUrl = process.env.PUBLIC_BASE_URL ?? url.origin;
+        const result = await createCheckoutSession(key.id, Number(body?.usd), baseUrl);
+        if ("error" in result) {
+          return Response.json({ error: { type: "billing_error", message: result.error } }, {
+            status: 400,
+          });
+        }
+        return Response.json(result);
+      }
+      if (path === "/billing/webhook" && req.method === "POST") {
+        const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        if (!whSecret) return new Response("webhook not configured", { status: 503 });
+        const payload = await req.text();
+        if (!verifyStripeSignature(payload, req.headers.get("stripe-signature"), whSecret)) {
+          return new Response("bad signature", { status: 400 });
+        }
+        const { credited } = applyWebhookEvent(db, JSON.parse(payload));
+        return Response.json({ received: true, credited });
+      }
 
       if (path === "/v1/models" && req.method === "GET") {
         return Response.json({
@@ -44,6 +120,11 @@ export function startGateway(opts: ServerOptions = {}) {
           name: key.name,
           balance_usd: key.balance_nano / 1e9,
         });
+      }
+
+      if (path === "/v1/usage" && req.method === "GET") {
+        if (!key) return authError();
+        return Response.json(usageForKey(db, key.id));
       }
 
       if (req.method === "POST" && path === "/v1/chat/completions") {

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overflow console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0b0f14; --raise:#10161d; --card:#131a22; --line:#1f2933; --line2:#2c3a47;
+    --ink:#e8edf2; --dim:#8fa0b0; --faint:#5c6b7a;
+    --amber:#ffb224; --green:#3ddc84; --red:#ff5c5c;
+    --mono:"JetBrains Mono",ui-monospace,monospace; --grot:"Space Grotesk",sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--ink); font-family:"Inter",sans-serif; font-size:15px; line-height:1.6; }
+  .wrap { max-width:860px; margin:0 auto; padding:0 24px; }
+  header { border-bottom:1px solid var(--line); }
+  header .wrap { display:flex; justify-content:space-between; align-items:center; height:58px; }
+  .logo { font-family:var(--grot); font-weight:700; display:flex; gap:9px; align-items:center; }
+  .logo em { font-style:normal; color:var(--faint); font-weight:400; font-size:13px; }
+  main { padding:44px 0 80px; }
+  h2 { font-family:var(--grot); font-size:22px; letter-spacing:-.02em; margin-bottom:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:22px; margin-bottom:20px; }
+  input { font-family:var(--mono); font-size:13.5px; padding:11px 13px; border:1px solid var(--line2); border-radius:8px; background:var(--raise); color:var(--ink); outline:none; width:100%; }
+  input:focus { border-color:var(--amber); }
+  .row { display:flex; gap:10px; }
+  .btn { font-weight:600; font-size:13.5px; padding:11px 18px; border:none; border-radius:8px; background:var(--amber); color:#0b0f14; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#ffc14d; }
+  .btn.ghost { background:transparent; color:var(--amber); border:1px solid var(--amber); }
+  .msg { font-family:var(--mono); font-size:13px; margin-top:10px; display:none; }
+  .msg.ok { display:block; color:var(--green); word-break:break-all; }
+  .msg.err { display:block; color:var(--red); }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .stat .k { font-size:12px; color:var(--faint); text-transform:uppercase; letter-spacing:.1em; }
+  .stat .v { font-family:var(--mono); font-size:24px; margin-top:6px; }
+  .stat .v.green { color:var(--green); }
+  table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12.5px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { color:var(--faint); font-weight:500; }
+  td .arrow { color:var(--amber); }
+  .muted { color:var(--dim); font-size:13.5px; }
+  .packs { display:flex; gap:10px; margin-top:12px; }
+  .hidden { display:none; }
+  a { color:var(--amber); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#10161d" stroke="#2c3a47"/><path d="M8 21c2-7 6-11 8-11s6 4 8 11" stroke="#ffb224" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+      overflow <em>console</em>
+    </div>
+    <span class="muted" id="whoami"></span>
+  </div>
+</header>
+<main class="wrap">
+
+  <div id="auth">
+    <div class="card">
+      <h2>Sign in with your API key</h2>
+      <div class="row">
+        <input id="keyin" type="password" placeholder="ovf_...">
+        <button class="btn" id="login">Open console</button>
+      </div>
+      <p class="msg err" id="loginmsg"></p>
+    </div>
+    <div class="card">
+      <h2>New here? Get a key</h2>
+      <p class="muted">One key per email. It's shown once, so store it somewhere safe.</p>
+      <div class="row" style="margin-top:12px">
+        <input id="emailin" type="email" placeholder="you@example.com">
+        <button class="btn ghost" id="signup">Create my key</button>
+      </div>
+      <p class="msg" id="signupmsg"></p>
+    </div>
+  </div>
+
+  <div id="console" class="hidden">
+    <div class="stats">
+      <div class="stat"><div class="k">Balance</div><div class="v" id="balance">–</div></div>
+      <div class="stat"><div class="k">Tokens through pool</div><div class="v" id="tokens">–</div></div>
+      <div class="stat"><div class="k">Saved vs Claude API</div><div class="v green" id="saved">–</div></div>
+    </div>
+    <div class="card">
+      <h2>Top up</h2>
+      <p class="muted">Prepaid credits, minimum $10. Non-refundable, valid 12 months. Card payments via Stripe.</p>
+      <div class="packs" id="packs"></div>
+      <p class="msg err" id="paymsg"></p>
+    </div>
+    <div class="card">
+      <h2>Recent usage</h2>
+      <table>
+        <thead><tr><th>when</th><th>requested</th><th>served</th><th>tokens</th><th>cost</th></tr></thead>
+        <tbody id="events"></tbody>
+      </table>
+      <p class="muted" id="noevents" style="margin-top:10px">No usage yet. Point your agent at this gateway and hit a limit.</p>
+    </div>
+    <p class="muted">Signed in. <a href="#" id="logout">Sign out</a></p>
+  </div>
+
+</main>
+<script>
+  // Savings comparison baseline: Claude Sonnet API list price.
+  const CLAUDE_IN_PER_M = 3, CLAUDE_OUT_PER_M = 15;
+  const $ = (id) => document.getElementById(id);
+  const key = () => sessionStorage.getItem('ovf_key');
+
+  async function api(path, opts) {
+    const res = await fetch(path, { ...opts, headers: { 'x-api-key': key() ?? '', 'content-type': 'application/json', ...(opts?.headers ?? {}) } });
+    return { ok: res.ok, body: await res.json().catch(() => ({})) };
+  }
+
+  async function openConsole() {
+    const info = await api('/v1/key');
+    if (!info.ok) { sessionStorage.removeItem('ovf_key'); return false; }
+    $('auth').classList.add('hidden');
+    $('console').classList.remove('hidden');
+    $('whoami').textContent = info.body.name;
+    $('balance').textContent = '$' + info.body.balance_usd.toFixed(4);
+    const usage = await api('/v1/usage');
+    const t = usage.body.totals ?? { in_tokens: 0, out_tokens: 0, cost_nano: 0 };
+    $('tokens').textContent = ((t.in_tokens + t.out_tokens) / 1e6).toFixed(2) + 'M';
+    const claudeCost = (t.in_tokens * CLAUDE_IN_PER_M + t.out_tokens * CLAUDE_OUT_PER_M) / 1e6;
+    $('saved').textContent = '$' + Math.max(0, claudeCost - t.cost_nano / 1e9).toFixed(2);
+    const rows = usage.body.events ?? [];
+    $('noevents').style.display = rows.length ? 'none' : 'block';
+    $('events').innerHTML = rows.map(e =>
+      `<tr><td>${e.ts}</td><td>${e.requested_model}</td><td><span class="arrow">→</span> ${e.served_model}@${e.upstream}</td>` +
+      `<td>${e.in_tokens}/${e.out_tokens}</td><td>$${(e.cost_nano / 1e9).toFixed(6)}</td></tr>`).join('');
+    const packs = await fetch('/billing/packs').then(r => r.json());
+    $('packs').innerHTML = packs.packs.map(p => `<button class="btn ghost" data-usd="${p.usd}">${p.label}</button>`).join('');
+    $('packs').querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+      const res = await api('/billing/checkout', { method: 'POST', body: JSON.stringify({ key: key(), usd: Number(b.dataset.usd) }) });
+      if (res.ok && res.body.url) location.href = res.body.url;
+      else { $('paymsg').className = 'msg err'; $('paymsg').textContent = res.body.error?.message ?? 'Checkout failed.'; }
+    }));
+    return true;
+  }
+
+  $('login').addEventListener('click', async () => {
+    sessionStorage.setItem('ovf_key', $('keyin').value.trim());
+    if (!(await openConsole())) { $('loginmsg').className = 'msg err'; $('loginmsg').textContent = 'Key not recognized.'; }
+  });
+
+  $('signup').addEventListener('click', async () => {
+    const res = await fetch('/signup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: $('emailin').value.trim() }) });
+    const body = await res.json();
+    const m = $('signupmsg');
+    if (res.ok) { m.className = 'msg ok'; m.textContent = 'Your key (shown once, copy it now): ' + body.key; }
+    else { m.className = 'msg err'; m.textContent = body.error?.message ?? 'Signup failed.'; }
+  });
+
+  $('logout').addEventListener('click', (e) => { e.preventDefault(); sessionStorage.removeItem('ovf_key'); location.reload(); });
+
+  if (key()) openConsole();
+</script>
+</body>
+</html>

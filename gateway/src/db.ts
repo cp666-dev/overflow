@@ -49,7 +49,20 @@ export function openDb(path?: string): Database {
       cost_nano INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_usage_key_ts ON usage_events(key_id, ts);
+    CREATE TABLE IF NOT EXISTS payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      stripe_session_id TEXT NOT NULL UNIQUE,
+      key_id INTEGER NOT NULL REFERENCES api_keys(id),
+      amount_cents INTEGER NOT NULL,
+      credited_nano INTEGER NOT NULL,
+      ts TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
+  const cols = db.query("PRAGMA table_info(api_keys)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "email")) {
+    db.exec("ALTER TABLE api_keys ADD COLUMN email TEXT");
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_keys_email ON api_keys(email)");
+  }
   return db;
 }
 
@@ -58,12 +71,42 @@ function hashKey(key: string): string {
 }
 
 /** Creates a key and returns the plaintext once. Only the hash is stored. */
-export function createApiKey(db: Database, name: string): { key: string; id: number } {
+export function createApiKey(
+  db: Database,
+  name: string,
+  email?: string,
+): { key: string; id: number } {
   const key = "ovf_" + randomBytes(24).toString("hex");
   const row = db
-    .query("INSERT INTO api_keys (key_hash, name) VALUES (?, ?) RETURNING id")
-    .get(hashKey(key), name) as { id: number };
+    .query("INSERT INTO api_keys (key_hash, name, email) VALUES (?, ?, ?) RETURNING id")
+    .get(hashKey(key), name, email ?? null) as { id: number };
   return { key, id: row.id };
+}
+
+export function emailExists(db: Database, email: string): boolean {
+  return !!db.query("SELECT 1 FROM api_keys WHERE email = ?").get(email);
+}
+
+export interface UsageSummary {
+  events: any[];
+  totals: { in_tokens: number; out_tokens: number; cost_nano: number; requests: number };
+}
+
+export function usageForKey(db: Database, keyId: number, limit = 50): UsageSummary {
+  const events = db
+    .query(
+      `SELECT ts, requested_model, served_model, upstream, in_tokens, out_tokens, cost_nano
+       FROM usage_events WHERE key_id = ? ORDER BY id DESC LIMIT ?`,
+    )
+    .all(keyId, limit) as any[];
+  const totals = db
+    .query(
+      `SELECT COALESCE(SUM(in_tokens),0) in_tokens, COALESCE(SUM(out_tokens),0) out_tokens,
+              COALESCE(SUM(cost_nano),0) cost_nano, COUNT(*) requests
+       FROM usage_events WHERE key_id = ?`,
+    )
+    .get(keyId) as UsageSummary["totals"];
+  return { events, totals };
 }
 
 export function lookupKey(db: Database, key: string): ApiKey | null {

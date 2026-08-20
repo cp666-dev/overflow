@@ -45,7 +45,13 @@ Any OpenAI-SDK tool works too: base URL `http://localhost:8484/v1`, API key `ovf
 
 ## Money
 
-All balances are integers in nanodollars (1e-9 USD); prices in the routing table are USD per million tokens, which conveniently equals microdollars per token. Credits are CLI-managed for now; Stripe top-ups are the next step. Data lives in SQLite (`gateway/data/overflow.db`, WAL mode); swap for Postgres when it outgrows one box.
+All balances are integers in nanodollars (1e-9 USD); prices in the routing table are USD per million tokens, which conveniently equals microdollars per token. Data lives in SQLite (`gateway/data/overflow.db`, WAL mode); swap for Postgres when it outgrows one box.
+
+Customers self-serve at `/` (the console): signup issues a key per email, Stripe Checkout sells prepaid packs ($10/$25/$50, 3D Secure required), and the `/billing/webhook` endpoint credits the ledger idempotently on `checkout.session.completed`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `PUBLIC_BASE_URL`, and register the webhook (events: `checkout.session.completed`) at `https://<host>/billing/webhook` in the Stripe dashboard.
+
+## Deploy
+
+`Dockerfile` + `fly.toml` are included; see the comments at the top of `fly.toml` for the four commands (app create, volume, secrets, deploy).
 
 ## Tests
 
