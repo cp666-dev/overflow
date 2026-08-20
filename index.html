@@ -8,26 +8,28 @@
 <meta property="og:title" content="Overflow — never watch the reset timer again">
 <meta property="og:description" content="When your AI subscription caps out, your agent keeps going at up to 90% off. Hard-capped, revocable, no account sharing — ever.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x23F3;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230B0F14'/><path d='M8 20c2-6 6-10 8-10s6 4 8 10' stroke='%23FFB224' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #ede6d8;
-    --surface: #f4efe5;
-    --bg: #f7f3ea;
-    --ink: #221c14;
-    --ink-muted: #6e6353;
-    --ink-faint: #9c9081;
-    --terracotta: #b14b2c;
-    --terracotta-deep: #8f3a20;
-    --ok: #3e8e5a;
-    --line: #d2c7b2;
-    --line-strong: #c2b59c;
-    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --bg: #0b0f14;
+    --bg-raise: #10161d;
+    --bg-card: #131a22;
+    --line: #1f2933;
+    --line-bright: #2c3a47;
+    --ink: #e8edf2;
+    --ink-dim: #8fa0b0;
+    --ink-faint: #5c6b7a;
+    --amber: #ffb224;
+    --amber-dim: rgba(255,178,36,.14);
+    --green: #3ddc84;
+    --red: #ff5c5c;
+    --cyan: #4cc3ff;
+    --grotesk: "Space Grotesk", "Inter", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
     --sans: "Inter", -apple-system, sans-serif;
-    --serif: "Spectral", Georgia, serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -36,283 +38,396 @@
     color: var(--ink);
     font-family: var(--sans);
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+  ::selection { background: var(--amber); color: #0b0f14; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
 
-  /* ---------- header ---------- */
-  header { padding: 28px 0 0; }
-  header .wrap { display: flex; justify-content: space-between; align-items: baseline; }
-  .brand { font-family: var(--mono); font-weight: 500; font-size: 15px; letter-spacing: .04em; }
-  .brand::before { content: "▚ "; color: var(--terracotta); }
-  nav a { font-size: 13.5px; color: var(--ink-muted); text-decoration: none; margin-left: 18px; }
-  nav a:hover { color: var(--terracotta); }
+  /* ---------- nav ---------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(11,15,20,.85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  header .wrap { display: flex; justify-content: space-between; align-items: center; height: 60px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: var(--grotesk); font-weight: 700; font-size: 17px; letter-spacing: .01em; }
+  .logo svg { display: block; }
+  nav { display: flex; align-items: center; gap: 26px; }
+  nav a { font-size: 13.5px; color: var(--ink-dim); text-decoration: none; font-weight: 500; }
+  nav a:hover { color: var(--ink); }
+  nav a.cta {
+    color: #0b0f14; background: var(--amber); padding: 7px 16px; border-radius: 6px; font-weight: 600;
+  }
+  nav a.cta:hover { background: #ffc14d; color: #0b0f14; }
 
   /* ---------- hero ---------- */
-  .hero { padding: 84px 0 56px; }
-  .timer {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-family: var(--mono); font-size: 13px;
-    background: var(--paper); border: 1px solid var(--line);
-    border-radius: 6px; padding: 7px 14px;
-    color: var(--ink-muted); margin-bottom: 28px;
+  .hero { padding: 88px 0 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 12px; color: var(--amber);
+    background: var(--amber-dim); border: 1px solid rgba(255,178,36,.3);
+    padding: 5px 12px; border-radius: 100px; margin-bottom: 24px;
   }
-  .timer .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--terracotta); animation: pulse 1.6s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity: .3; } }
-  .timer b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
   h1 {
-    font-family: var(--serif); font-weight: 600;
-    font-size: clamp(34px, 6vw, 52px); line-height: 1.12;
-    letter-spacing: -0.01em; margin-bottom: 22px;
+    font-family: var(--grotesk); font-weight: 700;
+    font-size: clamp(34px, 4.4vw, 50px); line-height: 1.08;
+    letter-spacing: -0.025em; margin-bottom: 20px;
   }
-  h1 em { font-style: italic; color: var(--terracotta); }
-  .lede { font-family: var(--serif); font-size: 19.5px; color: var(--ink-muted); max-width: 58ch; }
-  .lede + .lede { margin-top: 14px; }
+  h1 .hl { color: var(--amber); }
+  .lede { font-size: 17px; color: var(--ink-dim); max-width: 46ch; }
+  .lede b { color: var(--ink); font-weight: 600; }
 
-  /* ---------- forms ---------- */
-  .signup { margin-top: 36px; }
-  .signup form { display: flex; gap: 10px; max-width: 460px; }
+  .signup { margin-top: 30px; }
+  .signup form { display: flex; gap: 10px; max-width: 440px; }
   .signup input[type=email] {
-    flex: 1; font-family: var(--mono); font-size: 14px;
-    padding: 12px 14px; border: 1px solid var(--line-strong);
-    border-radius: 3px; background: #fffdf8; color: var(--ink);
+    flex: 1; font-family: var(--mono); font-size: 13.5px;
+    padding: 13px 15px; border: 1px solid var(--line-bright);
+    border-radius: 8px; background: var(--bg-raise); color: var(--ink);
     outline: none; min-width: 0;
   }
-  .signup input[type=email]:focus { border-color: var(--terracotta); box-shadow: 0 0 0 3px rgba(177,75,44,.12); }
+  .signup input[type=email]::placeholder { color: var(--ink-faint); }
+  .signup input[type=email]:focus { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-dim); }
   .btn {
     font-family: var(--sans); font-weight: 600; font-size: 14px;
-    padding: 12px 20px; border: none; border-radius: 3px;
-    background: var(--terracotta); color: var(--paper); cursor: pointer;
-    white-space: nowrap;
+    padding: 13px 22px; border: none; border-radius: 8px;
+    background: var(--amber); color: #0b0f14; cursor: pointer; white-space: nowrap;
   }
-  .btn:hover { background: var(--terracotta-deep); }
+  .btn:hover { background: #ffc14d; }
   .btn:active { transform: translateY(1px); }
-  .btn[disabled] { opacity: .55; cursor: default; }
-  .form-note { font-size: 12.5px; color: var(--ink-faint); margin-top: 10px; }
-  .form-msg { font-size: 14px; margin-top: 12px; font-weight: 500; display: none; }
-  .form-msg.ok { display: block; color: var(--ok); }
-  .form-msg.err { display: block; color: var(--terracotta); }
+  .btn[disabled] { opacity: .5; cursor: default; }
+  .form-note { font-size: 12.5px; color: var(--ink-faint); margin-top: 12px; }
+  .form-note a { color: var(--ink-dim); }
+  .form-msg { font-size: 13.5px; margin-top: 12px; font-weight: 500; display: none; font-family: var(--mono); }
+  .form-msg.ok { display: block; color: var(--green); }
+  .form-msg.err { display: block; color: var(--red); }
+
+  /* ---------- terminal ---------- */
+  .term {
+    background: #0d1117; border: 1px solid var(--line-bright); border-radius: 12px;
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.02) inset;
+    overflow: hidden; font-family: var(--mono); font-size: 12.8px; line-height: 1.75;
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 11px 14px; border-bottom: 1px solid var(--line);
+    background: var(--bg-raise);
+  }
+  .term-bar i { width: 11px; height: 11px; border-radius: 50%; background: var(--line-bright); }
+  .term-bar i:nth-child(1) { background: #ff5f57; } .term-bar i:nth-child(2) { background: #febc2e; } .term-bar i:nth-child(3) { background: #28c840; }
+  .term-bar span { margin-left: 8px; color: var(--ink-faint); font-size: 11.5px; }
+  .term-body { padding: 18px 20px 22px; min-height: 275px; }
+  .term-body .ln { white-space: pre-wrap; word-break: break-word; }
+  .t-dim { color: var(--ink-faint); }
+  .t-ink { color: #c9d5e0; }
+  .t-amber { color: var(--amber); }
+  .t-green { color: var(--green); }
+  .t-red { color: var(--red); }
+  .t-cyan { color: var(--cyan); }
+  .cursor { display: inline-block; width: 8px; height: 15px; background: var(--amber); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- ticker ---------- */
+  .ticker { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg-raise); overflow: hidden; }
+  .ticker-inner {
+    display: flex; gap: 48px; padding: 13px 0; width: max-content;
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink-dim);
+    animation: scroll 38s linear infinite;
+  }
+  .ticker-inner span b { color: var(--green); font-weight: 500; }
+  .ticker-inner span i { font-style: normal; color: var(--ink-faint); }
+  @keyframes scroll { to { transform: translateX(-50%); } }
 
   /* ---------- sections ---------- */
-  section { padding: 56px 0; border-top: 1px solid var(--line); }
-  .kicker {
-    font-family: var(--mono); font-size: 12px; text-transform: uppercase;
-    letter-spacing: .14em; color: var(--terracotta); margin-bottom: 14px;
+  section { padding: 88px 0; }
+  section + section { border-top: 1px solid var(--line); }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--amber); margin-bottom: 14px; }
+  h2 { font-family: var(--grotesk); font-weight: 700; font-size: clamp(26px, 3vw, 34px); letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 14px; }
+  .sub { color: var(--ink-dim); max-width: 62ch; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 24px; position: relative;
   }
-  h2 { font-family: var(--serif); font-weight: 600; font-size: 28px; line-height: 1.25; margin-bottom: 16px; }
-  p + p { margin-top: 14px; }
-  .muted { color: var(--ink-muted); }
+  .card .num { font-family: var(--mono); font-size: 12px; color: var(--amber); margin-bottom: 14px; }
+  .card h3 { font-family: var(--grotesk); font-size: 17px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .card p { font-size: 14px; color: var(--ink-dim); }
+  .card code { font-family: var(--mono); font-size: 12px; background: var(--bg-raise); border: 1px solid var(--line-bright); border-radius: 5px; padding: 1px 6px; color: var(--cyan); }
 
-  .steps { margin-top: 28px; display: grid; gap: 0; }
-  .step {
-    display: grid; grid-template-columns: 44px 1fr; gap: 16px;
-    padding: 20px 0; border-top: 1px solid var(--line);
+  /* ---------- seller / gauge ---------- */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  .gauge-card {
+    background: var(--bg-card); border: 1px solid var(--line-bright); border-radius: 14px;
+    padding: 26px; box-shadow: 0 24px 60px -24px rgba(0,0,0,.6);
   }
-  .step:first-child { border-top: none; }
-  .step .n {
-    font-family: var(--mono); font-size: 15px; color: var(--terracotta);
-    border: 1px solid var(--line-strong); border-radius: 50%;
-    width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
-    background: var(--surface);
+  .gauge-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .gauge-head .title { font-family: var(--grotesk); font-weight: 600; font-size: 15px; }
+  .gauge-head .sub2 { font-size: 12.5px; color: var(--ink-faint); }
+  .pill { font-family: var(--mono); font-size: 11.5px; padding: 4px 11px; border-radius: 100px; border: 1px solid; }
+  .pill.live { color: var(--green); border-color: rgba(61,220,132,.4); background: rgba(61,220,132,.08); }
+  .pill.off { color: var(--ink-faint); border-color: var(--line-bright); background: var(--bg-raise); }
+  .gauge-num { font-family: var(--mono); font-size: 26px; font-weight: 500; margin: 18px 0 4px; font-variant-numeric: tabular-nums; }
+  .gauge-num span { font-size: 14px; color: var(--ink-faint); }
+  .gauge-bar { height: 10px; border-radius: 100px; background: var(--bg-raise); border: 1px solid var(--line); overflow: hidden; margin: 10px 0 6px; }
+  .gauge-bar i { display: block; height: 100%; width: 34%; border-radius: 100px; background: linear-gradient(90deg, var(--amber), #ffc14d); transition: width .4s, background .3s; }
+  .gauge-cap { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
+  .gauge-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .gauge-foot .earned { font-family: var(--mono); font-size: 13px; color: var(--ink-dim); }
+  .gauge-foot .earned b { color: var(--green); font-weight: 500; }
+  .btn.danger { background: transparent; color: var(--red); border: 1px solid rgba(255,92,92,.45); font-size: 13px; padding: 9px 16px; }
+  .btn.danger:hover { background: rgba(255,92,92,.1); }
+  .revoked .gauge-bar i { background: var(--line-bright); }
+
+  /* ---------- diff / principles ---------- */
+  .diff {
+    margin-top: 36px; background: #0d1117; border: 1px solid var(--line-bright); border-radius: 12px;
+    font-family: var(--mono); font-size: 13px; line-height: 1.9; overflow: hidden;
   }
-  .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-  .step p { font-size: 14.5px; color: var(--ink-muted); }
-  .step code { font-family: var(--mono); font-size: 13px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+  .diff-head { padding: 10px 18px; border-bottom: 1px solid var(--line); color: var(--ink-faint); font-size: 11.5px; background: var(--bg-raise); }
+  .diff-body { padding: 14px 0; }
+  .diff .dl { padding: 1px 18px; white-space: pre-wrap; }
+  .diff .add { color: var(--green); background: rgba(61,220,132,.06); }
+  .diff .del { color: var(--red); background: rgba(255,92,92,.06); text-decoration: line-through; text-decoration-color: rgba(255,92,92,.5); }
+  .diff .ctx { color: var(--ink-faint); }
 
-  /* seller card */
-  .capdemo {
-    margin-top: 28px; background: var(--surface); border: 1px solid var(--line);
-    border-radius: 10px; padding: 22px;
-    box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 2px 6px -2px rgba(90,74,53,.16);
+  /* ---------- final cta ---------- */
+  .final { text-align: center; }
+  .final .signup { display: flex; justify-content: center; }
+  .final .signup form { max-width: 460px; width: 100%; }
+  .final h2 { margin-top: 8px; }
+
+  footer { border-top: 1px solid var(--line); padding: 34px 0 54px; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--ink-faint); }
+  footer a { color: var(--ink-dim); }
+
+  @media (max-width: 880px) {
+    .hero, .split { grid-template-columns: 1fr; gap: 40px; }
+    .grid3 { grid-template-columns: 1fr; }
+    nav a:not(.cta) { display: none; }
+    section { padding: 64px 0; }
   }
-  .capdemo .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; margin-bottom: 8px; }
-  .capdemo .row b { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .bar { height: 9px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin: 6px 0 14px; }
-  .bar i { display: block; height: 100%; width: 34%; background: var(--terracotta); transition: width .4s ease; }
-  .capdemo .foot { display: flex; justify-content: space-between; align-items: center; }
-  .capdemo .foot small { color: var(--ink-faint); font-size: 12.5px; }
-  .btn.ghost { background: transparent; color: var(--terracotta); border: 1px solid var(--terracotta); font-size: 13px; padding: 8px 14px; }
-  .btn.ghost:hover { background: rgba(177,75,44,.07); }
-  .capdemo.revoked .bar i { background: var(--ink-faint); }
-  .capdemo.revoked .status { color: var(--ink-faint); }
-  .status { color: var(--ok); font-weight: 600; font-size: 13px; }
-
-  /* principles */
-  .rules { margin-top: 24px; }
-  .rule { display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 15px; }
-  .rule:first-child { border-top: none; }
-  .rule .tick { color: var(--ok); font-weight: 700; }
-  .rule .cross { color: var(--terracotta); font-weight: 700; }
-  .rule b { font-weight: 600; }
-
-  /* pricing strip */
-  .prices { margin-top: 24px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
-  .price-row { display: flex; justify-content: space-between; align-items: baseline; padding: 13px 18px; border-top: 1px solid var(--line); font-size: 14.5px; }
-  .price-row:first-child { border-top: none; }
-  .price-row .m { font-family: var(--mono); }
-  .price-row .p { font-family: var(--mono); color: var(--ok); font-weight: 500; }
-  .price-row .p span { color: var(--ink-faint); font-weight: 400; }
-  .prices-note { font-size: 12.5px; color: var(--ink-faint); margin-top: 10px; }
-
-  /* footer */
-  footer { border-top: 1px solid var(--line); padding: 36px 0 56px; }
-  footer .wrap { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px; }
-  footer p { font-size: 13px; color: var(--ink-faint); }
-  footer a { color: var(--ink-muted); }
-
-  @media (max-width: 560px) {
-    .signup form { flex-direction: column; }
-    .hero { padding: 56px 0 40px; }
-  }
+  @media (max-width: 560px) { .signup form { flex-direction: column; } }
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <div class="brand">overflow</div>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#10161d" stroke="#2c3a47"/><path d="M8 21c2-7 6-11 8-11s6 4 8 11" stroke="#ffb224" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+      overflow
+    </div>
     <nav>
       <a href="#how">How it works</a>
       <a href="#sell">Sell capacity</a>
       <a href="#rules">Principles</a>
+      <a href="#join" class="cta">Join waitlist</a>
     </nav>
   </div>
 </header>
 
-<div class="hero">
-  <div class="wrap">
-    <div class="timer"><span class="dot"></span> Claude limit reached · resets in <b id="countdown">2:47:12</b></div>
-    <h1>You know that timer.<br>Your agent shouldn't <em>stop</em> for it.</h1>
-    <p class="lede">You pay real money for Claude, ChatGPT, or Grok — and still hit the wall mid-task. Overflow is a pool of discounted, honestly-labeled open-model capacity your coding agent falls back to automatically, so the work keeps moving until your limit resets.</p>
-    <p class="lede">One endpoint. Up to 90% below subscription-equivalent cost. No account sharing, no gray-market nonsense — capacity from people who actually own it.</p>
-
+<div class="hero wrap">
+  <div>
+    <div class="eyebrow">⏳ limit resets in <b id="countdown">2:47:12</b></div>
+    <h1>Your agent shouldn't stop because <span class="hl">your quota did.</span></h1>
+    <p class="lede">You pay for Claude, ChatGPT, or Grok — and still hit the wall mid-task. Overflow is a pool of discounted, <b>honestly-labeled</b> open-model capacity your coding agent falls back to automatically. The work keeps moving until your limit resets. Up to <b>90% off</b>. No account sharing, ever.</p>
     <div class="signup" id="join">
       <form data-tag="demand">
         <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
         <button class="btn" type="submit">Join the waitlist</button>
       </form>
-      <p class="form-note">For people who hit their limits. Got idle GPUs instead? <a href="#sell">Sell into the pool.</a></p>
+      <p class="form-note">For people who hit their limits. Got idle GPUs instead? <a href="#sell">Sell into the pool →</a></p>
       <p class="form-msg"></p>
     </div>
   </div>
+
+  <div class="term">
+    <div class="term-bar"><i></i><i></i><i></i><span>claude — ~/projects/api</span></div>
+    <div class="term-body" id="termbody"></div>
+  </div>
+</div>
+
+<div class="ticker">
+  <div class="ticker-inner" id="ticker"></div>
 </div>
 
 <section id="how">
   <div class="wrap">
-    <div class="kicker">How it works · buyers</div>
+    <div class="kicker">// how it works — buyers</div>
     <h2>Your subscription first. The pool when it runs dry.</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="n">1</div>
-        <div>
-          <h3>Point your agent at Overflow</h3>
-          <p>One OpenAI-compatible endpoint (Anthropic-shaped too). Works with Claude Code via <code>ANTHROPIC_BASE_URL</code>, plus Codex, Cursor, and anything speaking the standard APIs. Prepaid credits, no subscription.</p>
-        </div>
+    <p class="sub">Overflow isn't a replacement for your plan — it's the fallback that makes the reset timer irrelevant.</p>
+    <div class="grid3">
+      <div class="card">
+        <div class="num">01</div>
+        <h3>Point your agent at Overflow</h3>
+        <p>One OpenAI-compatible endpoint (Anthropic-shaped too). Works with Claude Code via <code>ANTHROPIC_BASE_URL</code>, plus Codex, Cursor, and anything speaking the standard APIs. Prepaid credits — no subscription.</p>
       </div>
-      <div class="step">
-        <div class="n">2</div>
-        <div>
-          <h3>Hit your limit, keep working</h3>
-          <p>When your own plan caps out, the router continues your session on the nearest open-model equivalent — Qwen3-Coder, DeepSeek, GLM — and tells you exactly which model answered. Always.</p>
-        </div>
+      <div class="card">
+        <div class="num">02</div>
+        <h3>Hit your limit, keep working</h3>
+        <p>When your plan caps out, the router continues your session on the nearest open-model equivalent — Qwen3-Coder, DeepSeek, GLM — and stamps every response with the model that produced it.</p>
       </div>
-      <div class="step">
-        <div class="n">3</div>
-        <div>
-          <h3>Snap back when your limit resets</h3>
-          <p>Overflow is the fallback, not the replacement. The moment your subscription has headroom again, you're back on it and the meter stops.</p>
-        </div>
+      <div class="card">
+        <div class="num">03</div>
+        <h3>Snap back on reset</h3>
+        <p>The moment your subscription has headroom again, you're back on it and the meter stops. You only ever pay for overflow.</p>
       </div>
     </div>
-
-    <div class="prices">
-      <div class="price-row"><span class="m">Qwen3-Coder 480B</span><span class="muted">nearest match to Sonnet</span><span class="p">$0.31<span>/M tokens</span></span></div>
-      <div class="price-row"><span class="m">DeepSeek V3.2</span><span class="muted">general + reasoning</span><span class="p">$0.19<span>/M tokens</span></span></div>
-      <div class="price-row"><span class="m">GLM-4.7</span><span class="muted">cheapest in pool</span><span class="p">$0.11<span>/M tokens</span></span></div>
-    </div>
-    <p class="prices-note">Illustrative launch pricing. Every response is labeled with the model that produced it — substitution is never silent.</p>
   </div>
 </section>
 
 <section id="sell">
-  <div class="wrap">
-    <div class="kicker">How it works · sellers</div>
-    <h2>Going away? Your GPU doesn't have to.</h2>
-    <p class="muted">Gaming rig idle for two weeks? Homelab mostly asleep? Run one Docker command and your hardware serves open-weight models into the pool — metered per token, at a price you set. You never share an account, a login, or a key to anything. There is nothing to overuse while you're gone, because the only thing on offer is compute you deposited, with a cap you chose.</p>
-
-    <div class="capdemo" id="capdemo">
-      <div class="row"><span>Llama 4 on your 2× RTX 4090 · away until Aug 31</span><span class="status" id="capstatus">● live</span></div>
-      <div class="row"><span class="muted">Hard cap — never exceeded</span><b id="capnum">17.1M / 50M tokens</b></div>
-      <div class="bar"><i id="capbar"></i></div>
-      <div class="foot">
-        <small>Cap enforced at the gateway and on your worker. Revoking takes effect in seconds.</small>
-        <button class="btn ghost" id="revoke">Revoke now</button>
+  <div class="wrap split">
+    <div>
+      <div class="kicker">// how it works — sellers</div>
+      <h2>Going away? Your GPU doesn't have to.</h2>
+      <p class="sub">Gaming rig idle for two weeks? Homelab mostly asleep? Run one Docker command and your hardware serves open-weight models into the pool — metered per token, at a price you set.</p>
+      <p class="sub" style="margin-top:14px">You never share an account, a login, or a key to anything. The only thing on offer is compute you deposited, with a hard cap you chose — so there's nothing to come home to but a payout.</p>
+      <div class="signup">
+        <form data-tag="supply">
+          <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+          <button class="btn" type="submit">I have idle GPUs</button>
+        </form>
+        <p class="form-msg"></p>
       </div>
     </div>
-
-    <div class="signup">
-      <form data-tag="supply">
-        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
-        <button class="btn" type="submit">I have idle GPUs</button>
-      </form>
-      <p class="form-msg"></p>
+    <div class="gauge-card" id="gauge">
+      <div class="gauge-head">
+        <div>
+          <div class="title">llama-4 · 2× RTX 4090</div>
+          <div class="sub2">away until Aug 31 · price you set: $0.24/M</div>
+        </div>
+        <span class="pill live" id="gstatus">● live</span>
+      </div>
+      <div class="gauge-num" id="gnum">17.1M <span>/ 50M tokens</span></div>
+      <div class="gauge-bar"><i id="gbar"></i></div>
+      <div class="gauge-cap"><span>0</span><span>hard cap — never exceeded</span><span>50M</span></div>
+      <div class="gauge-foot">
+        <span class="earned">earned so far <b>$4.10</b></span>
+        <button class="btn danger" id="revoke">Revoke now</button>
+      </div>
     </div>
   </div>
 </section>
 
 <section id="rules">
   <div class="wrap">
-    <div class="kicker">Principles</div>
+    <div class="kicker">// principles</div>
     <h2>The boring rules that make this legitimate.</h2>
-    <p class="muted">There's already a gray market for "cheap Claude tokens" — pooled accounts, stolen credentials, silently swapped models, prompts harvested and resold. Overflow exists to be the opposite of that, structurally:</p>
-    <div class="rules">
-      <div class="rule"><span class="cross">✕</span><span><b>No account sharing, ever.</b> We never touch your Claude, OpenAI, or any provider credentials — not yours, not sellers'. Nothing on the platform violates a provider's terms.</span></div>
-      <div class="rule"><span class="cross">✕</span><span><b>No silent substitution.</b> Every response is stamped with the exact model that produced it. Workers are canary-tested so a seller can't serve a smaller model than advertised.</span></div>
-      <div class="rule"><span class="cross">✕</span><span><b>No prompt harvesting.</b> Requests are metered, not logged. Your prompts are not a product.</span></div>
-      <div class="rule"><span class="tick">✓</span><span><b>Hard caps and instant revocation.</b> Sellers set a token ceiling and a time window; the meter is authoritative and the revoke button works mid-holiday, from a phone, in seconds.</span></div>
-      <div class="rule"><span class="tick">✓</span><span><b>Open-weight models, openly licensed.</b> The pool serves models whose weights are licensed for exactly this. Proprietary models join only via official partner channels.</span></div>
+    <p class="sub">There's already a gray market for "cheap Claude tokens" — pooled accounts, stolen credentials, silently swapped models, prompts harvested and resold. Overflow is a diff against that:</p>
+    <div class="diff">
+      <div class="diff-head">gray_market.md → overflow.md</div>
+      <div class="diff-body">
+        <div class="dl del">- pooled subscription accounts &amp; shared logins</div>
+        <div class="dl add">+ compute the seller actually owns, serving openly-licensed models</div>
+        <div class="dl del">- silent model substitution ("Claude" that isn't)</div>
+        <div class="dl add">+ every response stamped with the exact model that produced it</div>
+        <div class="dl del">- prompts harvested and resold as training data</div>
+        <div class="dl add">+ metered, not logged — your prompts are not a product</div>
+        <div class="dl del">- accounts drained while owners sleep</div>
+        <div class="dl add">+ hard token caps + instant revocation, enforced at the gateway</div>
+        <div class="dl ctx">  proprietary models join only via official partner channels.</div>
+      </div>
     </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="kicker">// waitlist</div>
+    <h2>Never watch the reset timer again.</h2>
+    <div class="signup">
+      <form data-tag="demand">
+        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+        <button class="btn" type="submit">Join the waitlist</button>
+      </form>
+    </div>
+    <p class="form-msg" style="text-align:center"></p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <p>▚ overflow — the pool for idle AI capacity.</p>
-    <p><a href="#join">Waitlist</a> · <a href="mailto:connor.panayi@gmail.com">Contact</a></p>
+    <span>overflow — the pool for idle AI capacity</span>
+    <span><a href="#join">Waitlist</a> · <a href="mailto:connor.panayi@gmail.com">Contact</a></span>
   </div>
 </footer>
 
 <script>
-  // --- fake but honest countdown: a limit-reset timer ticking down ---
+  // countdown chip
   (function () {
     var el = document.getElementById('countdown');
     var t = 2 * 3600 + 47 * 60 + 12;
     setInterval(function () {
       t = t > 0 ? t - 1 : 4 * 3600 + 59 * 60;
-      var h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
-      el.textContent = h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      el.textContent = Math.floor(t/3600) + ':' + String(Math.floor(t%3600/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0');
     }, 1000);
   })();
 
-  // --- seller cap demo: revoke toggles instantly ---
+  // hero terminal: an agent hits the wall, overflow catches it. Loops.
   (function () {
-    var demo = document.getElementById('capdemo'),
-        btn = document.getElementById('revoke'),
-        status = document.getElementById('capstatus');
+    var body = document.getElementById('termbody');
+    var script = [
+      ['t-dim',   '$ claude "refactor the auth middleware and add tests"', 0],
+      ['t-ink',   '  ⏺ Reading src/middleware/auth.ts…', 700],
+      ['t-ink',   '  ⏺ Refactoring token validation (3 files)…', 900],
+      ['t-red',   '  ✗ rate_limit_reached — your 5-hour limit resets in 2h 47m', 1400],
+      ['t-dim',   '  …', 900],
+      ['t-amber', '  ▚ overflow: falling back to pool', 800],
+      ['t-cyan',  '  → model: qwen3-coder-480b · $0.31/M · labeled in every response', 600],
+      ['t-ink',   '  ⏺ Continuing refactor… 3 files updated', 1000],
+      ['t-ink',   '  ⏺ Writing tests… 14 passing', 1100],
+      ['t-green', '  ✓ Done. Pool spend: $0.07 · subscription resumes on reset', 900]
+    ];
+    var i = 0;
+    function step() {
+      if (i >= script.length) {
+        setTimeout(function () { body.innerHTML = ''; i = 0; step(); }, 5200);
+        return;
+      }
+      var s = script[i];
+      setTimeout(function () {
+        var d = document.createElement('div');
+        d.className = 'ln ' + s[0];
+        d.textContent = s[1];
+        var c = body.querySelector('.cursor'); if (c) c.remove();
+        d.appendChild(Object.assign(document.createElement('span'), { className: 'cursor' }));
+        body.appendChild(d);
+        i++; step();
+      }, s[2]);
+    }
+    step();
+  })();
+
+  // price ticker (content doubled for a seamless loop)
+  (function () {
+    var items = '<span>qwen3-coder-480b <b>$0.31/M</b> <i>· nearest match to sonnet</i></span>' +
+      '<span>deepseek-v3.2 <b>$0.19/M</b> <i>· general + reasoning</i></span>' +
+      '<span>glm-4.7 <b>$0.11/M</b> <i>· cheapest in pool</i></span>' +
+      '<span>llama-4-maverick <b>$0.14/M</b> <i>· p2p · 2×4090</i></span>' +
+      '<span>gpt-oss-120b <b>$0.16/M</b> <i>· p2p · homelab</i></span>' +
+      '<span>pool capacity <b>live</b> <i>· illustrative launch pricing</i></span>';
+    document.getElementById('ticker').innerHTML = items + items;
+  })();
+
+  // seller gauge: revoke toggles instantly
+  (function () {
+    var g = document.getElementById('gauge'), btn = document.getElementById('revoke'), st = document.getElementById('gstatus');
     btn.addEventListener('click', function () {
-      var off = demo.classList.toggle('revoked');
-      status.textContent = off ? '○ paused' : '● live';
+      var off = g.classList.toggle('revoked');
+      st.textContent = off ? '○ paused' : '● live';
+      st.className = 'pill ' + (off ? 'off' : 'live');
       btn.textContent = off ? 'Resume' : 'Revoke now';
     });
   })();
 
-  // --- waitlist forms → Formspree (set FORM_ID before launch) ---
+  // waitlist forms → Formspree (set FORM_ID before launch)
   var FORMSPREE_ID = 'FORM_ID';
   document.querySelectorAll('.signup form').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var msg = form.parentElement.querySelector('.form-msg');
+      var msg = form.parentElement.querySelector('.form-msg') || form.parentElement.parentElement.querySelector('.form-msg');
       var btn = form.querySelector('button');
       var email = form.querySelector('input[name=email]').value;
       if (FORMSPREE_ID === 'FORM_ID') {
@@ -337,8 +452,8 @@
     });
   });
 
-  // Cloudflare Web Analytics: paste the manual beacon <script> snippet just before </body>
-  // before launch (use manual setup, NOT proxied nameservers — see README).
+  // Cloudflare Web Analytics: paste the manual beacon snippet just before </body>
+  // before launch (manual setup, NOT proxied nameservers — see README).
 </script>
 </body>
 </html>
