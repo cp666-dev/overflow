@@ -1,5 +1,7 @@
 import { Database } from "bun:sqlite";
 import { createHash, randomBytes } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 export interface ApiKey {
   id: number;
@@ -22,9 +24,9 @@ export interface UsageEvent {
 }
 
 export function openDb(path?: string): Database {
-  const db = new Database(path ?? process.env.OVERFLOW_DB ?? "data/overflow.db", {
-    create: true,
-  });
+  const file = path ?? process.env.OVERFLOW_DB ?? "data/overflow.db";
+  mkdirSync(dirname(file), { recursive: true });
+  const db = new Database(file, { create: true });
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec(`
     CREATE TABLE IF NOT EXISTS api_keys (
