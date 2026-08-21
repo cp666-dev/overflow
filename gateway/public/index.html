@@ -100,6 +100,45 @@
       </table>
       <p class="muted" id="noevents" style="margin-top:10px">No usage yet. Point your agent at this gateway and hit a limit.</p>
     </div>
+
+    <h2 style="margin:36px 0 4px">Sell capacity</h2>
+    <div class="stats">
+      <div class="stat"><div class="k">Earned</div><div class="v green" id="s_earned">–</div></div>
+      <div class="stat"><div class="k">Available to pay out</div><div class="v" id="s_avail">–</div></div>
+      <div class="stat"><div class="k">Active workers</div><div class="v" id="s_active">–</div></div>
+    </div>
+    <div class="card">
+      <h2>List a worker</h2>
+      <p class="muted">Advertise a model you run locally. You set the price and a hard token cap. You get a one-time registration token to start your worker.</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px">
+        <input id="l_pool" placeholder="pool model id (e.g. qwen3-coder)">
+        <input id="l_upstream" placeholder="exact model id your server reports">
+        <input id="l_askin" type="number" step="0.01" placeholder="your price $/M input">
+        <input id="l_askout" type="number" step="0.01" placeholder="your price $/M output">
+        <input id="l_cap" type="number" placeholder="hard token cap (e.g. 50000000)">
+        <input id="l_window" type="datetime-local" title="available until (optional)">
+      </div>
+      <button class="btn" id="l_create" style="margin-top:12px">Create listing</button>
+      <p class="msg" id="l_msg"></p>
+    </div>
+    <div class="card">
+      <h2>Your listings</h2>
+      <table>
+        <thead><tr><th>id</th><th>model</th><th>price in/out</th><th>cap used</th><th>status</th><th>earned</th><th></th></tr></thead>
+        <tbody id="listings"></tbody>
+      </table>
+      <p class="muted" id="nolistings" style="margin-top:10px">No listings yet.</p>
+    </div>
+    <div class="card">
+      <h2>Payouts</h2>
+      <p class="muted">Earnings pay out to your bank via Stripe Connect. Complete onboarding once, then request a payout any time you're over the $5 minimum.</p>
+      <div class="row" style="margin-top:12px; max-width:420px">
+        <button class="btn ghost" id="p_onboard">Set up payouts</button>
+        <button class="btn" id="p_request">Request payout</button>
+      </div>
+      <p class="msg" id="p_msg"></p>
+    </div>
+
     <p class="muted">Signed in. <a href="#" id="logout">Sign out</a></p>
   </div>
 
@@ -139,8 +178,76 @@
       if (res.ok && res.body.url) location.href = res.body.url;
       else { $('paymsg').className = 'msg err'; $('paymsg').textContent = res.body.error?.message ?? 'Checkout failed.'; }
     }));
+    await loadSeller();
     return true;
   }
+
+  const GATEWAY_WSS = location.origin.replace(/^http/, 'ws');
+  async function loadSeller() {
+    const res = await api('/seller/listings');
+    if (!res.ok) return;
+    const { listings, summary, connected } = res.body;
+    $('s_earned').textContent = '$' + (summary.earnings_nano / 1e9).toFixed(4);
+    $('s_avail').textContent = '$' + (summary.available_nano / 1e9).toFixed(2);
+    $('s_active').textContent = String(summary.active_workers);
+    const live = new Set(connected);
+    $('nolistings').style.display = listings.length ? 'none' : 'block';
+    $('listings').innerHTML = listings.map(l => {
+      const capPct = Math.min(100, Math.round(100 * l.tokens_used / l.token_cap));
+      const dot = live.has(l.id) ? '🟢' : '⚪';
+      const canRevoke = l.status === 'active' || l.status === 'offline' || l.status === 'pending';
+      return `<tr>
+        <td>#${l.id}</td>
+        <td>${l.pool_model}<br><span style="color:var(--faint)">${l.upstream_model}</span></td>
+        <td>$${l.ask_in_per_m}/$${l.ask_out_per_m}</td>
+        <td>${(l.tokens_used/1e6).toFixed(2)}M / ${(l.token_cap/1e6).toFixed(0)}M (${capPct}%)</td>
+        <td>${dot} ${l.status}</td>
+        <td style="color:var(--green)">$${(l.earnings_nano/1e9).toFixed(4)}</td>
+        <td>${canRevoke ? `<a href="#" data-revoke="${l.id}" style="color:var(--red)">revoke</a>` : ''}</td>
+      </tr>`;
+    }).join('');
+    $('listings').querySelectorAll('[data-revoke]').forEach(a => a.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await api('/seller/listings/' + a.dataset.revoke + '/revoke', { method: 'POST' });
+      loadSeller();
+    }));
+  }
+
+  $('l_create').addEventListener('click', async () => {
+    const payload = {
+      poolModel: $('l_pool').value.trim(),
+      upstreamModel: $('l_upstream').value.trim(),
+      askInPerM: Number($('l_askin').value),
+      askOutPerM: Number($('l_askout').value),
+      tokenCap: Number($('l_cap').value),
+      windowEnd: $('l_window').value ? new Date($('l_window').value).toISOString() : null,
+    };
+    const res = await api('/seller/listings', { method: 'POST', body: JSON.stringify(payload) });
+    const m = $('l_msg');
+    if (res.ok) {
+      const cmd = `docker run --rm --network host \\\n`
+        + `  -e OVERFLOW_GATEWAY_URL=${GATEWAY_WSS} \\\n`
+        + `  -e OVERFLOW_REG_TOKEN=${res.body.regToken} \\\n`
+        + `  -e LOCAL_OPENAI_BASE=http://localhost:8000/v1 \\\n`
+        + `  overflow-worker`;
+      m.className = 'msg ok';
+      m.innerHTML = 'Listing created. Registration token (shown once):<br><b>' + res.body.regToken
+        + '</b><br><br>Start your worker:<br><pre style="white-space:pre-wrap;background:var(--raise);padding:12px;border-radius:8px;border:1px solid var(--line2)">' + cmd + '</pre>';
+      loadSeller();
+    } else { m.className = 'msg err'; m.textContent = res.body.error?.message ?? 'Failed to create listing.'; }
+  });
+
+  $('p_onboard').addEventListener('click', async () => {
+    const res = await api('/seller/payouts/onboard', { method: 'POST' });
+    if (res.ok && res.body.url) location.href = res.body.url;
+    else { $('p_msg').className = 'msg err'; $('p_msg').textContent = res.body.error?.message ?? 'Onboarding unavailable.'; }
+  });
+  $('p_request').addEventListener('click', async () => {
+    const res = await api('/seller/payouts/request', { method: 'POST' });
+    const m = $('p_msg');
+    if (res.ok) { m.className = 'msg ok'; m.textContent = 'Payout of $' + res.body.paid_usd.toFixed(2) + ' requested.'; loadSeller(); }
+    else { m.className = 'msg err'; m.textContent = res.body.error?.message ?? 'Payout failed.'; }
+  });
 
   $('login').addEventListener('click', async () => {
     sessionStorage.setItem('ovf_key', $('keyin').value.trim());
