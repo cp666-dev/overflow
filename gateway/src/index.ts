@@ -2,6 +2,16 @@ import { openDb, lookupKey, createApiKey, emailExists, usageForKey } from "./db"
 import { defaultConfig, findRoute, upstreamFor, type GatewayConfig } from "./config";
 import { handleCompletion } from "./proxy";
 import { applyWebhookEvent, createCheckoutSession, verifyStripeSignature, PACKS } from "./billing";
+import { WorkerRegistry, type WorkerSocketData } from "./workers-registry";
+import { serveFromWorker } from "./worker-proxy";
+import {
+  createWorkerListing,
+  listingsForSeller,
+  sellerSummary,
+  workerById,
+  type NewListing,
+} from "./marketplace";
+import { createConnectAccount, createAccountLink, requestPayout } from "./payouts";
 
 const DASHBOARD = new URL("../public/index.html", import.meta.url).pathname;
 
@@ -24,15 +34,31 @@ export interface ServerOptions {
 export function startGateway(opts: ServerOptions = {}) {
   const db = openDb(opts.dbPath);
   const config = opts.config ?? defaultConfig;
+  const registry = new WorkerRegistry(db);
 
-  const server = Bun.serve({
+  const server = Bun.serve<WorkerSocketData>({
     port: opts.port ?? Number(process.env.OVERFLOW_PORT ?? 8484),
     idleTimeout: 240,
+    websocket: {
+      open() {},
+      message(ws, message) {
+        registry.handleMessage(ws, typeof message === "string" ? message : message.toString());
+      },
+      close(ws) {
+        registry.handleClose(ws);
+      },
+    },
     async fetch(req, srv) {
       const url = new URL(req.url);
       const path = url.pathname;
 
       if (path === "/healthz") return Response.json({ ok: true });
+
+      // ---- worker control channel (outbound WS from seller workers) ----
+      if (path === "/worker/connect") {
+        if (srv.upgrade(req, { data: { kind: "worker" } as WorkerSocketData })) return undefined;
+        return new Response("expected websocket upgrade", { status: 426 });
+      }
 
       if (path === "/" && req.method === "GET") {
         return new Response(Bun.file(DASHBOARD), {
@@ -127,13 +153,121 @@ export function startGateway(opts: ServerOptions = {}) {
         return Response.json(usageForKey(db, key.id));
       }
 
+      // ---- seller / marketplace ----
+      if (path === "/seller/listings" && req.method === "GET") {
+        if (!key) return authError();
+        return Response.json({
+          listings: listingsForSeller(db, key.id),
+          summary: sellerSummary(db, key.id),
+          connected: listingsForSeller(db, key.id)
+            .filter((l) => registry.has(l.id))
+            .map((l) => l.id),
+        });
+      }
+      if (path === "/seller/listings" && req.method === "POST") {
+        if (!key) return authError();
+        const b: any = await req.json().catch(() => null);
+        const listing: NewListing = {
+          poolModel: String(b?.poolModel ?? "").trim(),
+          upstreamModel: String(b?.upstreamModel ?? "").trim(),
+          askInPerM: Number(b?.askInPerM),
+          askOutPerM: Number(b?.askOutPerM),
+          tokenCap: Math.floor(Number(b?.tokenCap)),
+          windowEnd: b?.windowEnd ? String(b.windowEnd) : null,
+        };
+        if (
+          !listing.poolModel ||
+          !listing.upstreamModel ||
+          !(listing.askInPerM >= 0) ||
+          !(listing.askOutPerM >= 0) ||
+          !(listing.tokenCap > 0)
+        ) {
+          return Response.json(
+            { error: { type: "invalid_request", message: "Missing or invalid listing fields." } },
+            { status: 400 },
+          );
+        }
+        const { id, regToken } = createWorkerListing(db, key.id, listing);
+        return Response.json({
+          id,
+          regToken,
+          note: "Registration token shown once. Pass it to your worker via OVERFLOW_REG_TOKEN.",
+        });
+      }
+      const revokeMatch = path.match(/^\/seller\/listings\/(\d+)\/revoke$/);
+      if (revokeMatch && req.method === "POST") {
+        if (!key) return authError();
+        const id = Number(revokeMatch[1]);
+        const w = workerById(db, id);
+        if (!w || w.seller_key_id !== key.id) {
+          return Response.json({ error: { type: "not_found" } }, { status: 404 });
+        }
+        registry.revoke(id);
+        return Response.json({ revoked: true });
+      }
+      if (path === "/seller/payouts/onboard" && req.method === "POST") {
+        if (!key) return authError();
+        const acct = await createConnectAccount(db, key);
+        if ("error" in acct) {
+          return Response.json({ error: { type: "payout_error", message: acct.error } }, {
+            status: 400,
+          });
+        }
+        const link = await createAccountLink(acct.accountId, process.env.PUBLIC_BASE_URL ?? url.origin);
+        if ("error" in link) {
+          return Response.json({ error: { type: "payout_error", message: link.error } }, {
+            status: 400,
+          });
+        }
+        return Response.json({ url: link.url });
+      }
+      if (path === "/seller/payouts/request" && req.method === "POST") {
+        if (!key) return authError();
+        const result = requestPayout(db, key.id);
+        if ("error" in result) {
+          return Response.json({ error: { type: "payout_error", message: result.error } }, {
+            status: 400,
+          });
+        }
+        return Response.json(result);
+      }
+
       if (req.method === "POST" && path === "/v1/chat/completions") {
         if (!key) return authError();
-        return handleCompletion(req, "openai", "/v1/chat/completions", db, config, key);
+        const body: any = await req.json().catch(() => null);
+        if (!body) {
+          return Response.json(
+            { error: { type: "invalid_request_error", message: "Body must be JSON." } },
+            { status: 400 },
+          );
+        }
+        // Marketplace-first: a live seller worker for this model beats wholesale.
+        if (key.balance_nano > 0) {
+          const worker = registry.pick(String(body.model ?? ""), Date.now());
+          if (worker) {
+            return serveFromWorker(
+              db,
+              registry,
+              key,
+              worker,
+              String(body.model ?? ""),
+              body,
+              body.stream === true,
+            );
+          }
+        }
+        return handleCompletion(body, req.headers, "openai", "/v1/chat/completions", db, config, key);
       }
       if (req.method === "POST" && path === "/v1/messages") {
         if (!key) return authError();
-        return handleCompletion(req, "anthropic", "/v1/messages", db, config, key);
+        const body: any = await req.json().catch(() => null);
+        if (!body) {
+          return Response.json(
+            { error: { type: "invalid_request_error", message: "Body must be JSON." } },
+            { status: 400 },
+          );
+        }
+        return handleCompletion(body, req.headers, "anthropic", "/v1/messages", db, config, key);
       }
 
       // Claude Code calls this; pass through un-metered when the upstream supports it.
@@ -172,8 +306,13 @@ export function startGateway(opts: ServerOptions = {}) {
     },
   });
 
+  // Liveness heartbeat. Unref'd so it never keeps the process (or test runner)
+  // alive on its own.
+  const heartbeat = setInterval(() => registry.pingAll(), 30_000);
+  (heartbeat as unknown as { unref?: () => void }).unref?.();
+
   console.log(`overflow gateway listening on http://localhost:${server.port}`);
-  return { server, db };
+  return { server, db, registry, heartbeat };
 }
 
 function authError(): Response {

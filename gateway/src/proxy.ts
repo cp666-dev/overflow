@@ -125,7 +125,8 @@ function settle(
  * response so substitution is never silent.
  */
 export async function handleCompletion(
-  req: Request,
+  body: any,
+  incomingHeaders: Headers,
   shape: Shape,
   path: string,
   db: Database,
@@ -138,13 +139,6 @@ export async function handleCompletion(
       "insufficient_credits",
       "Your Overflow balance is empty. Top up to keep going.",
     );
-  }
-
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return jsonError(400, "invalid_request_error", "Body must be JSON.");
   }
 
   const requestedModel = String(body?.model ?? "");
@@ -168,7 +162,7 @@ export async function handleCompletion(
   try {
     upstreamRes = await fetch(upstreamUrl(shape, upstream, path), {
       method: "POST",
-      headers: upstreamHeaders(shape, upstream, req.headers),
+      headers: upstreamHeaders(shape, upstream, incomingHeaders),
       body: JSON.stringify(body),
     });
   } catch (e) {

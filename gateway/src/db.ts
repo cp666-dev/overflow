@@ -57,17 +57,52 @@ export function openDb(path?: string): Database {
       credited_nano INTEGER NOT NULL,
       ts TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    -- A seller's capacity listing. The live socket lives in memory; this row is
+    -- the durable state: pricing, the authoritative token cap/counter, window,
+    -- and accrued earnings.
+    CREATE TABLE IF NOT EXISTS workers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      seller_key_id INTEGER NOT NULL REFERENCES api_keys(id),
+      reg_token_hash TEXT NOT NULL UNIQUE,
+      pool_model TEXT NOT NULL,
+      upstream_model TEXT NOT NULL,
+      ask_in_per_m REAL NOT NULL,
+      ask_out_per_m REAL NOT NULL,
+      token_cap INTEGER NOT NULL,
+      tokens_used INTEGER NOT NULL DEFAULT 0,
+      window_end TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      earnings_nano INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_workers_seller ON workers(seller_key_id);
+    CREATE TABLE IF NOT EXISTS payouts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      seller_key_id INTEGER NOT NULL REFERENCES api_keys(id),
+      amount_nano INTEGER NOT NULL,
+      stripe_transfer_id TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      ts TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
   const cols = db.query("PRAGMA table_info(api_keys)").all() as { name: string }[];
   if (!cols.some((c) => c.name === "email")) {
     db.exec("ALTER TABLE api_keys ADD COLUMN email TEXT");
     db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_keys_email ON api_keys(email)");
   }
+  if (!cols.some((c) => c.name === "stripe_connect_id")) {
+    db.exec("ALTER TABLE api_keys ADD COLUMN stripe_connect_id TEXT");
+    db.exec("ALTER TABLE api_keys ADD COLUMN paid_out_nano INTEGER NOT NULL DEFAULT 0");
+  }
   return db;
 }
 
+export function sha256hex(s: string): string {
+  return createHash("sha256").update(s).digest("hex");
+}
+
 function hashKey(key: string): string {
-  return createHash("sha256").update(key).digest("hex");
+  return sha256hex(key);
 }
 
 /** Creates a key and returns the plaintext once. Only the hash is stored. */
