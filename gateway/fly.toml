@@ -1,24 +1,30 @@
-# Fly.io config. Deploy:
-#   fly launch --no-deploy   (once; creates the app, pick a name/region)
-#   fly volumes create overflow_data --size 1
-#   fly secrets set DEEPSEEK_API_KEY=... STRIPE_SECRET_KEY=... STRIPE_WEBHOOK_SECRET=... PUBLIC_BASE_URL=https://<app>.fly.dev
-#   fly deploy
-app = "overflow-gateway"
-primary_region = "lhr"
+# fly.toml app configuration for overflow-gateway.
+#
+# Remaining deploy steps (run from gateway/):
+#   fly volumes create overflow_data --size 1 --app overflow-gateway
+#   fly secrets set DEEPSEEK_API_KEY=... STRIPE_SECRET_KEY=... STRIPE_WEBHOOK_SECRET=... \
+#     PUBLIC_BASE_URL=https://overflow-gateway.fly.dev --app overflow-gateway
+#   fly deploy --app overflow-gateway
+
+app = 'overflow-gateway'
+primary_region = 'lhr'
 
 [build]
 
 [http_service]
   internal_port = 8484
   force_https = true
-  auto_stop_machines = false
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 1
+  processes = ['app']
 
 [mounts]
-  source = "overflow_data"
-  destination = "/data"
+  source = 'overflow_data'
+  destination = '/data'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024
